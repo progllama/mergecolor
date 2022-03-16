@@ -19,7 +19,7 @@ class Point
     }
 
     add(p) {
-        return new Point(this.x+p.x, this.y+this.y);
+        return new Point(this.x+p.x, this.y+p.y);
     }
 }
 
@@ -31,7 +31,7 @@ class Pixel
     }
 }
 
-COMPARISON_RANGE = [
+COMPARISON_TARGETS = [
     new Point(-1, 1),
     new Point(0, 1),
     new Point(1, 1),
@@ -50,8 +50,6 @@ async function main()
 
     const opts = program.opts();
 
-    console.log(opts.path);
-
     if (!fs.existsSync(opts.path))
     {
         console.log("指定されたパスがありません。");
@@ -66,8 +64,6 @@ async function main()
     const buf = await raw.toBuffer();
     const output = new Uint8Array(width*height*3);
 
-    console.log(height, width, output.length);
-
     for (let y = 0; y < height; y++)
     {
         for (let x = 0; x < width; x++)
@@ -80,7 +76,8 @@ async function main()
                 g: buf[(y*width*3)+(x*3)+1],
                 b: buf[(y*width*3)+(x*3)+2],
             }
-            for (let p of COMPARISON_RANGE)
+
+            for (let p of COMPARISON_TARGETS)
             {
                 let newPoint = p.add(currentPoint);
                 if (newPoint.x < 0 || width <= newPoint.x)
@@ -91,6 +88,7 @@ async function main()
                 {
                     continue;
                 }
+                // console.log(newPoint);
                 let newPixel = {
                     r: buf[(newPoint.y*width*3)+(newPoint.x*3)],
                     g: buf[(newPoint.y*width*3)+(newPoint.x*3)+1],
@@ -100,16 +98,27 @@ async function main()
                     + Math.pow((currentPixel.g - newPixel.g), 2)
                     + Math.pow((currentPixel.b - newPixel.b), 2);
                 
+                // if (x == 100)
+                // console.log(newPixel, a);
+                
                 if (diff <= a)
                 {
+                    diff = a;
                     candidate = newPixel;
                 }
             }
+            // if (x == 100)
+            // console.log(candidate);
+            // console.log(currentPixel);
             output[(y*width*3)+(x*3)] = candidate['r'];
             output[(y*width*3)+(x*3)+1] = candidate['g'];
             output[(y*width*3)+(x*3)+2] = candidate['b'];
         }
+        // if (y == 50)
+        // break;
     }
+
+    // return;
 
     sharp( output , 
         {
@@ -119,7 +128,7 @@ async function main()
                 channels:3,
             }
         } )
-        .toFile('test1.jpeg');
+        .toFile('test.jpeg');
 }
 
 main();
